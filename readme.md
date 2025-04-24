@@ -2,7 +2,7 @@
 
 ![Serverless](https://img.shields.io/badge/Serverless-FD5750.svg?style=for-the-badge&logo=Serverless&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED.svg?style=for-the-badge&logo=Docker&logoColor=white)
 
-PyFaaS is a lightweight Function-as-a-Service (FaaS) framework designed to manage and execute serverless functions using Docker containers. It provides a simple client-server architecture for invoking functions with specified Service Level Objectives (SLOs). 
+PyFaaS is a lightweight Function-as-a-Service (FaaS) framework designed to manage and execute serverless functions using Docker containers. It provides a simple client-server architecture for invoking functions with specified Service Level Objectives (SLOs).
 
 ## Features
 
@@ -15,11 +15,15 @@ PyFaaS is a lightweight Function-as-a-Service (FaaS) framework designed to manag
 
 ```
 pyfaas/
-├── controller.py   # Manages client requests and schedules pods
-├── pod.py          # Handles Docker container lifecycle
-├── user.py         # Provides a client interface for sending requests
-└── logs.yaml       # Stores execution logs (generated at runtime)
+├── controller.py
+├── pod.py
+├── user.py
+└── logs.yaml
 template_pod/
+├── app.py
+├── server.py
+├── dockerfile
+└── requirement.txt
 ```
 
 ## Requirements
@@ -31,17 +35,18 @@ template_pod/
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd pyfaas
    ```
-
 2. Setup the package:
+
    ```bash
    pip install .
    ```
-
 3. Ensure Docker is installed and running:
+
    ```bash
    docker --version
    ```
@@ -60,6 +65,7 @@ docker build -t fibonacci .
 ### Start the Controller
 
 Run the `controller.py` to start the server:
+
 ```bash
 python controller.py
 ```
@@ -69,11 +75,13 @@ The server will start on `localhost:6000` by default.
 ### Send Requests
 
 Use the `user.py` script to send function invocation requests:
+
 ```bash
 python user.py
 ```
 
 Example request:
+
 ```python
 user = User(client_port=6000)
 response = user.send_req(
@@ -87,6 +95,7 @@ print(response)
 ### Logs
 
 Execution logs are saved in `logs.yaml`:
+
 ```yaml
 0:
   function_name: fibonacci
