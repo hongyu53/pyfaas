@@ -67,6 +67,7 @@ docker build -t fibonacci .
 Run the `controller.py` to start the server:
 
 ```bash
+cd pyfaas
 python controller.py
 ```
 
