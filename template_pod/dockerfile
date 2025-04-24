@@ -1,0 +1,7 @@
+FROM python:3.8-slim
+ENV PIPIMAGE=https://pypi.tuna.tsinghua.edu.cn/simple
+
+WORKDIR /workspace
+COPY *.py requirements.txt /workspace/
+RUN pip install -r requirements.txt -i $PIPIMAGE
+ENTRYPOINT ["python", "server.py"]
