@@ -86,8 +86,5 @@ class Pod:
         )
 
     def clear(self):
-        try:
-            container = client.containers.get(self.id)
-            container.remove(force=True)
-        except:
-            pass
+        container = client.containers.get(self.id)
+        container.remove(force=True)
