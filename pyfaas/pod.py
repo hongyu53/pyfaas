@@ -52,10 +52,10 @@ class Pod:
             container.reload()
         print(f"[INFO] Container {self.image}-{self.id} started")
 
-    def send_request(self, params):
+    def send_request(self, req):
         try:
             response = requests.post(
-                f"http://localhost:{self.host_port}/invoke", json=params
+                f"http://localhost:{self.host_port}/invoke", json=req
             )
             if response.status_code != 200:
                 raise ValueError(
@@ -86,5 +86,9 @@ class Pod:
         )
 
     def clear(self):
-        container = client.containers.get(self.id)
-        container.remove(force=True)
+        try:
+            container = client.containers.get(self.id)
+            container.remove(force=True)
+        except docker.errors.NotFound:
+            # already removed
+            pass
