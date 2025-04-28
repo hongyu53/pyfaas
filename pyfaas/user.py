@@ -1,3 +1,5 @@
+import threading
+
 import requests
 
 
@@ -7,26 +9,30 @@ class User:
         self.client_port = client_port
 
     def send_req(self, function_name, SLO, params={"foo": "bar"}):
-        try:
-            response = requests.post(
-                f"http://{self.client_host}:{self.client_port}/invoke",
-                json={
-                    "function_name": function_name,
-                    "SLO": SLO,
-                    "params": params,
-                },
-            )
-            return response.json()
-        except requests.exceptions.ConnectionError:
-            raise ValueError(f"[ERROR] Server not running")
+        def _send_req(function_name, SLO, params):
+            try:
+                response = requests.post(
+                    f"http://{self.client_host}:{self.client_port}/invoke",
+                    json={
+                        "function_name": function_name,
+                        "SLO": SLO,
+                        "params": params,
+                    },
+                )
+                return response.json()
+            except requests.exceptions.ConnectionError:
+                raise ValueError(f"[ERROR] Server not running")
+
+        threading.Thread(
+            target=_send_req,
+            args=(function_name, SLO, params),
+        ).start()
 
 
 if __name__ == "__main__":
     user = User(client_port=6000)
-    print(
-        user.send_req(
-            function_name="fibonacci",
-            SLO=0.5,
-            params={"n": 10},
-        )
+    user.send_req(
+        function_name="fibonacci",
+        SLO=0.5,
+        params={"n": 10},
     )
