@@ -3,7 +3,6 @@ import threading
 import time
 from multiprocessing import Manager, Process, Value
 
-import yaml
 from flask import Flask, jsonify, request
 from pyfaas.pod import Pod
 
@@ -12,7 +11,7 @@ class Controller:
     def __init__(self, host="localhost", port=5000):
         # controller is composed of: client, and scheduler.
         self.manager = Manager()
-        atexit.register(self._clear)
+        atexit.register(self._atexit)
 
         ###################
         ## client config ##
@@ -29,7 +28,7 @@ class Controller:
         ######################
         ## scheduler config ##
         ######################
-        self.pods = self.manager.list()
+        self.pods = self.manager.Queue()
 
     ############
     ## Client ##
@@ -56,28 +55,23 @@ class Controller:
             completion_time = time.perf_counter()
             req["e2e_time"] = completion_time - arrival_time
             req["real_time"] = res["real_time"]
-            ###### Save logs ######
-            with open("logs.yaml", "a") as f:
-                yaml.dump({id: req}, f)
             del self.res_pool[id]
             return jsonify(res)
 
     def run(self):
+        Process(target=self.schedule, daemon=True).start()
         self.client.run(host=self.host, port=self.port)
 
-    # <------------------------------------------------>
+    # <------------------------------------------------> #
 
     ###############
     ## Scheduler ##
     ###############
     def create_pod(self, image, cpu, memory, host_port, container_port, name=None):
         pod = Pod(image, cpu, memory, host_port, container_port, name)
-        self.pods.append(pod)
+        self.pods.put(pod)
+        pod.start()
         return pod
-
-    def delete_pod(self, pod):
-        self.pods.remove(pod)
-        pod.clear()
 
     def _get_reqs(self):
         reqs = []
@@ -87,15 +81,18 @@ class Controller:
         return reqs
 
     def _send_req(self, req):
-        pod = self.create_pod(
-            image=req["function_name"],
-            cpu=1,
-            memory=256,
-            host_port=10000 + req["id"],
-            container_port=5000,
-        )
-        pod.start()
+        if not self.pods.empty():
+            pod = self.pods.get()
+        else:
+            pod = self.create_pod(
+                image="ditto",
+                cpu=0.25,
+                memory=256,
+                host_port=10000 + req["id"],
+                container_port=5000,
+            )
         res = pod.send_request(req)
+        self.pods.put(pod)
         id = req["id"]
         self.res_pool[id] = res
 
@@ -113,14 +110,14 @@ class Controller:
             except KeyboardInterrupt:
                 break
 
-    def _clear(self):
+    def _atexit(self):
         print("[INFO] Waiting...")
         # clear all pods
-        for pod in self.pods:
+        while not self.pods.empty():
+            pod = self.pods.get()
             pod.clear()
 
 
 if __name__ == "__main__":
     demo = Controller(port=6000)
-    Process(target=demo.schedule, daemon=True).start()
     demo.run()
