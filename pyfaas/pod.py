@@ -44,10 +44,9 @@ class Pod:
         try:
             container = client.containers.get(self.id)
             container.start()
-        except docker.errors.APIError as e:
-            if e.status_code == 500:
-                self.clear()
-                raise ValueError(f"[ERROR] Port {self.host_port} already in use")
+        except docker.errors.APIError:
+            self.clear()
+            raise ValueError(f"[ERROR] Port {self.host_port} already in use")
         while not container.logs().decode("utf-8"):
             container.reload()
         print(f"[INFO] Container {self.image}-{self.id} started")
