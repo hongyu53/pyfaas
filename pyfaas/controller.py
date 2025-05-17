@@ -46,6 +46,7 @@ class Controller:
             id = self._next_id()
             req["id"] = id
             arrival_time = time.perf_counter()
+            print(f"Receiving request-{id}")
             self.req_pool.put(req)
 
             while not id in self.res_pool:

@@ -38,7 +38,6 @@ class Pod:
             self.id = container.short_id
         except docker.errors.ImageNotFound:
             raise ValueError(f"[ERROR] Image {self.image} not found")
-            exit(1)
 
     def start(self):
         try:
@@ -49,7 +48,6 @@ class Pod:
             raise ValueError(f"[ERROR] Port {self.host_port} already in use")
         while not container.logs().decode("utf-8"):
             container.reload()
-        print(f"[INFO] Container {self.image}-{self.id} started")
 
     def send_request(self, req):
         try:
@@ -79,9 +77,6 @@ class Pod:
             cpu_shares=int(self.cpu * 1024),
             mem_limit=f"{self.memory}m",
             memswap_limit=f"{self.memory}m",
-        )
-        print(
-            f"[INFO] Container {self.image}-{self.id} updated with CPU: {self.cpu} and Memory: {self.memory} MB"
         )
 
     def clear(self):
